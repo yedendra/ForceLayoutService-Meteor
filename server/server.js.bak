@@ -1,0 +1,228 @@
+Meteor.publish('companies', function() {
+  return Companies.find();
+});
+
+
+Facts.setUserIdFilter(function () {
+  return true;
+});
+
+
+
+var exec = Meteor.npmRequire("child_process").exec;
+var fs = Meteor.npmRequire('fs');
+Meteor.methods({
+
+ 	"forcedirect" : function(clientid){
+ 		var d3 = Meteor.npmRequire('d3');
+ 		
+ 		var objlist = Companies.find({"clientid" : clientid}).fetch();
+	  	var obj = objlist[0];
+	  	// console.log(obj);
+	  	// var force = d3.layout.force()
+				// 	    .charge(-120)
+				// 	    .linkDistance(30)
+				// 	    .size([obj.bounding_box.dx, obj.bounding_box.dy]);
+
+
+		var links = [];
+		obj.edges.forEach(function(e) {
+		    var sourceNode = obj.nodes.filter(function(n) {
+		        return n.name === e.source;
+		    })[0],
+		        targetNode = obj.nodes.filter(function(n) {
+		            return n.name === e.target;
+		        })[0];
+
+		    links.push({
+		        source: obj.nodes.indexOf(sourceNode),
+		        target: obj.nodes.indexOf(targetNode),
+		        value: e.value
+		    });
+		});
+
+		var tickcount = 0;
+		var bounding_box = obj.bounding_box;
+		// force
+	 //      .nodes(obj.nodes)
+	 //      .links(links)
+	 //      .start();
+
+
+
+	    // var force = d3.layout.force()
+					//     .nodes(obj.nodes)
+					//     .links(links)
+					//     .size([obj.bounding_box.dx, obj.bounding_box.dy])
+					//     .linkStrength(0.1)
+					//     .friction(0.9)
+					//     .linkDistance(20)
+					//     .charge(-30)
+					//     .gravity(0.1)
+					//     .theta(0.8)
+					//     .alpha(0.1)
+					//     .start(); 
+
+
+		  var force = d3.layout.force()
+					    .nodes(obj.nodes)
+					    .links(links)
+					    .size([	0.8, 0.8])
+					    .linkStrength(0.5)
+					    .friction(0.9)
+					    .linkDistance(0.4)
+					    .charge(-0.01)
+					    .gravity(0.85)
+					    .theta(0.8)
+					    .alpha(0.5)
+					    .start(); 
+
+	     force.on("tick", Meteor.bindEnvironment(function(){
+		    	var items = force.nodes();
+		    	var links = force.links();
+				tickcount++;
+				// socket
+				// if(tickcount %  == 0){
+					//sock.send(['test',JSON.stringify(items)]);
+					if(obj != null){
+			  			var _obj = {};
+						_obj.id = obj._id;
+						_obj.time = new Date();
+						_obj.nodes = [];
+
+						for(var i = 0;i < items.length;i++){
+							var _item = items[i];
+							var _n = {};
+							_n.name = _item.name;
+							_n.x = _item.x;
+							_n.y = _item.y;
+							_obj.nodes.push(_n);
+						}
+
+						_obj.edges = [];
+
+						for(var i = 0; i < links.length; i++){
+							var _link = links[i];
+							var _e = {};
+							_e.source = _link.source.name;
+							_e.target = _link.target.name;
+							_e.value = _link.value;
+							_e.sx = _link.source.x;
+							_e.sy = _link.source.y;
+							_e.tx = _link.target.x;
+							_e.ty = _link.target.y;
+							_obj.edges.push(_e);
+						}
+
+						Meteor.call("updateGraph", _obj, bounding_box);
+		    	
+					}	
+				// }
+
+		    }, function(err,res){
+				console.log(res, err);
+				return (res || err);
+		  }));
+
+	     force.on("end", Meteor.bindEnvironment(function(){
+	     		var items = force.nodes();
+	     		//sock.send(['test',"end " + JSON.stringify(items)]);
+	   //   		if(obj != null){
+		  // 			var id = obj._id;
+		  // 			var newObj = {};
+				// 	newObj.clientid = clientid;
+				// 	newObj.time = new Date();
+				// 	newObj.nodes = force.nodes();
+				// 	newObj.edges = force.links();
+				// 	newObj.bounding_box = obj.bounding_box;
+					
+			
+				// 	var _obj = {};
+				// 	_obj.id = id;
+				// 	_obj.data = newObj;
+				// 	//Meteor.call("updateGraph", _obj); 	    	
+				// }	
+				if(obj != null){
+		  			var _obj = {};
+					_obj.id = obj._id;
+					_obj.time = new Date();
+					_obj.nodes = [];
+
+					for(var i = 0;i < items.length;i++){
+						var _item = items[i];
+						var _n = {};
+						_n.name = _item.name;
+						_n.x = _item.x;
+						_n.y = _item.y;
+						_obj.nodes.push(_n);
+					}
+
+					_obj.edges = [];
+
+					for(var i = 0; i < links.length; i++){
+						var _link = links[i];
+						var _e = {};
+						_e.source = _link.source.name;
+						_e.target = _link.target.name;
+						_e.value = _link.value;
+						_e.sx = _link.source.x;
+						_e.sy = _link.source.y;
+						_e.tx = _link.target.x;
+						_e.ty = _link.target.y;
+						_obj.edges.push(_e);
+					}
+
+					Meteor.call("updateGraph", _obj, bounding_box);
+	    	
+				}		
+					
+	     }, function(err,res){
+						console.log(res, err);
+						return (res || err);
+		}));
+	     return obj;
+ 	},
+
+ 	"updateGraph" : function(_obj, bounding_box){
+		// Companies.remove({"clientid" : _obj.clientid });
+		//console.log(_obj.id);
+		Companies.update({"_id" : _obj.id }, {$set : { "nodes" : _obj.nodes, "edges" : _obj.edges, "time" : _obj.time }});
+
+		var yamlobj = {};
+		yamlobj.descrips = ["container-media-property"];
+		yamlobj.ingests = {};
+		yamlobj.ingests["container-id"] = "graph-1";
+		yamlobj.ingests["media-id"] = "graph-1-node-graph";
+		yamlobj.ingests["action"] = "POST:/nodeLocations";
+		
+		var arr = [];
+		for(var i = 0; i < _obj.nodes.length; i++){
+			var _t = {};
+			_t.id = _obj.nodes[i].name;
+			_t.x = _obj.nodes[i].x * bounding_box.dx;
+			_t.y = _obj.nodes[i].y * bounding_box.dy;		
+			arr.push(_t);
+		}
+		yamlobj.ingests["node_locations"] = arr;
+
+		var protein = YAML.safeDump(yamlobj);
+		// console.log(yml);
+
+		
+		fs.writeFile("/tmp/single.protein", protein, function(err) {
+		  if(err) {
+		     console.log(err);
+		   }
+		  else {
+		  		
+		  		//console.log("writtern output");
+		  		//exec("cp /tmp/single.protein /tmp/single1.protein");
+		    	exec("poke tcp://celvds.watson.ibm.com/framework-container /tmp/single.protein");
+		   }
+		});
+
+
+ 	}
+
+
+ });
