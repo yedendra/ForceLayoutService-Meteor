@@ -135,11 +135,11 @@ Template.forcelayout.rendered = function(){
 					})
 					.attr("r", function(d){
 						if(d.type === 0.5)
-							return 120;
+							return "4em";
 						else if(d.type === 2)
-							return 41;
+							return "2.1em";
 						else
-							return 40;
+							return "2em";
 					})
 					.attr("data-tooltip", function(d){
 						return decodeURI(d.label);
