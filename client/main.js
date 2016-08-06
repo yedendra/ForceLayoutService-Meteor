@@ -35,10 +35,23 @@ Template.forcelayout.rendered = function(){
 	//Easy colors accessible via a 10-step ordinal scale
 	var color = d3.scale.category10();
 
+	var margin = {top: 30, right: 20, bottom: 30, left: 50},
+    width = window.innerWidth - margin.left - margin.right,
+    height = window.innerHeight  - margin.top - margin.bottom;
+
 	//Create SVG element
-	var svg = d3.select("#graph");
-				
-	
+	var svg = d3.select("#graph")
+				.attr("width", width + margin.left + margin.right)
+				.attr("height", height + margin.top + margin.bottom)
+			.append("g")
+				.attr("transform", 
+					"translate(" + margin.left + "," + margin.top + ")");
+
+	// Define the div for the tooltip
+	var tooltipdiv = d3.select("body").append("div")	
+		.attr("class", "tooltip")				
+		.style("opacity", 0);
+		
 	var key = function(d){ 
 		return d.name;
 	};
@@ -47,8 +60,7 @@ Template.forcelayout.rendered = function(){
 		return d.source + "_" + d.target;
 	}
 
-	var width = window.innerWidth;
-	var height = window.innerHeight - 60;
+	
 
 	console.log(width + "   " + height);
 	Deps.autorun(function(){
@@ -65,9 +77,8 @@ Template.forcelayout.rendered = function(){
 				}
 			}
 
-			svg.attr("width", width)
-				.attr("height", height);
 
+		
 			//var g = svg.append("g");
 
 			
@@ -141,9 +152,12 @@ Template.forcelayout.rendered = function(){
 						else
 							return "2em";
 					})
-					.attr("data-tooltip", function(d){
-						return decodeURI(d.label);
-					})
+					// .attr("data-tooltip", function(d){
+
+					// 	var div = document.createElement("div")
+					// 	div.innerHTML = "<b>" + decodeURI(d.label) + "</b><p>" + d.content.description+ "</p>Employees : " + d.content.employees + "<br/>Revenue : " + d.content.revenue
+					// 	return div.innerHTML;
+					// })
 					.on("mousedown", function(d){
 						console.log(d);
 						if(d.type > 0.5){
@@ -151,6 +165,33 @@ Template.forcelayout.rendered = function(){
 								updateSelection(d.name)
 							}, 5);
 						}
+					})
+					.on("mouseover", function(d) {
+						if(!d.highlighted)
+							d3.select(this).style("stroke", "darkorange").style("stroke-width", "0.25em")		
+						tooltipdiv.transition()		
+							.duration(200)		
+							.style("opacity", .9);		
+						tooltipdiv	.html("<b>" + decodeURI(d.label) + "</b><p>" + d.content.description+ "</p>Employees : " + d.content.employees + "<br/>Revenue : " + d.content.revenue)	
+							.style("left", function(d){
+								if(window.innerWidth - d3.event.pageX < 250)
+									return  (d3.event.pageX -250) + "px"
+								else
+									return (d3.event.pageX) + "px"
+							})		
+							.style("top", function(d){
+								if( window.innerHeight - d3.event.pageY < 150)
+									return  (d3.event.pageY -150) + "px"
+								else
+									return (d3.event.pageY) + "px"
+							});	
+						})					
+					.on("mouseout", function(d) {	
+						if(!d.highlighted)
+							d3.select(this).style("stroke", "white").style("stroke-width", "0.1em")
+						tooltipdiv.transition()		
+							.duration(500)		
+							.style("opacity", 0);	
 					});
 
 			var text = svg.selectAll("text")

@@ -213,6 +213,7 @@ Meteor.methods({
 							_n.x = _item.x;
 							_n.y = _item.y;
 							_n.label = _item.label;
+							_n.content = _item.content;
 							_n.type = nodesScore[_item.name];
 							_obj.nodes.push(_n);
 						}
