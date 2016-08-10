@@ -12,6 +12,12 @@ body {
 
 @media screen and (min-width: 1921px) and (max-width: 3840px) { 
   body {
+    font-size: 30px;
+  }
+}
+
+@media screen and (min-width: 3841px) { 
+  body {
     font-size: 40px;
   }
 }
