@@ -1,5 +1,5 @@
 var selectionList = [];
-
+var contentDesc = {};
 function updateSelection(item){	
 	if(selectionList.indexOf(item) > -1){
 		selectionList.splice(selectionList.indexOf(item),1);
@@ -60,15 +60,24 @@ Template.forcelayout.rendered = function(){
 		return d.source + "_" + d.target;
 	}
 
-	
+	/*
+		
+	*/
 
 	console.log(width + "   " + height);
 	Deps.autorun(function(){
 		var dataset = Companies.find({"clientid" : clientid}).fetch();
+		var contents =  CompaniesDescription.find({"clientid" : clientid}).fetch();
+		console.log(contents);
+		if(contents.length>0 ){
+			contentDesc = contents[0].description;
+		}
+		
 		svg.selectAll("line").remove();
 		svg.selectAll("circle").remove();
 		svg.selectAll("text").remove();
 		if(dataset.length>0 && width != undefined && height != undefined){
+			
 			var obj = dataset[0];
 			selectionList.length = 0;
 			for(var i = 0; i < obj.nodes.length;i++){
@@ -168,24 +177,28 @@ Template.forcelayout.rendered = function(){
 					})
 					.on("mouseover", function(d) {
 						if(!d.highlighted)
-							d3.select(this).style("stroke", "darkorange").style("stroke-width", "0.25em")		
-						tooltipdiv.transition()		
-							.duration(200)		
-							.style("opacity", .9);		
-						tooltipdiv	.html("<b>" + decodeURI(d.label) + "</b><p>" + d.content.description+ "</p>Employees : " + d.content.employees + "<br/>Revenue : " + d.content.revenue)	
-							.style("left", function(d){
-								if(window.innerWidth - d3.event.pageX < 250)
-									return  (d3.event.pageX -250) + "px"
-								else
-									return (d3.event.pageX) + "px"
-							})		
-							.style("top", function(d){
-								if( window.innerHeight - d3.event.pageY < 150)
-									return  (d3.event.pageY -150) + "px"
-								else
-									return (d3.event.pageY) + "px"
-							});	
-						})					
+							d3.select(this).style("stroke", "darkorange").style("stroke-width", "0.25em")	
+
+						var cd = contentDesc[d.name]
+						if(cd){ 	
+							tooltipdiv.transition()		
+								.duration(200)		
+								.style("opacity", .9);		
+							tooltipdiv	.html("<b>" + decodeURI(d.label) + "</b><p>" + cd.description+ "</p>Employees : " + cd.employees + "<br/>Revenue : " + cd.revenue)	
+								.style("left", function(d){
+									if(window.innerWidth - d3.event.pageX < 250)
+										return  (d3.event.pageX -250) + "px"
+									else
+										return (d3.event.pageX) + "px"
+								})		
+								.style("top", function(d){
+									if( window.innerHeight - d3.event.pageY < 150)
+										return  (d3.event.pageY -150) + "px"
+									else
+										return (d3.event.pageY) + "px"
+								});
+						}	
+					})					
 					.on("mouseout", function(d) {	
 						if(!d.highlighted)
 							d3.select(this).style("stroke", "white").style("stroke-width", "0.1em")
