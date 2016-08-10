@@ -35,7 +35,7 @@ Template.forcelayout.rendered = function(){
 	//Easy colors accessible via a 10-step ordinal scale
 	var color = d3.scale.category10();
 
-	var margin = {top: 30, right: 20, bottom: 30, left: 50},
+	var margin = {top: 50, right: 50, bottom: 50, left: 50},
     width = window.innerWidth - margin.left - margin.right,
     height = window.innerHeight  - margin.top - margin.bottom;
 
@@ -155,11 +155,11 @@ Template.forcelayout.rendered = function(){
 					})
 					.attr("r", function(d){
 						if(d.type === 0.5)
-							return "4em";
+							return "3.2em";
 						else if(d.type === 2)
-							return "2.1em";
+							return "1.8em";
 						else
-							return "2em";
+							return "1.7em";
 					})
 					// .attr("data-tooltip", function(d){
 
