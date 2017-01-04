@@ -1,5 +1,13 @@
 var selectionList = [];
 var contentDesc = {};
+
+Meteor.startup(function() {
+  $(window).resize(function(evt) {
+	console.log("resize");
+	Session.set('currentTask', new Date())
+  });
+});
+
 function updateSelection(item){	
 	if(selectionList.indexOf(item) > -1){
 		selectionList.splice(selectionList.indexOf(item),1);
@@ -25,7 +33,6 @@ Template.forcelayout.events({
 	}
   
 });
-
 
 
 
@@ -66,6 +73,11 @@ Template.forcelayout.rendered = function(){
 
 	console.log(width + "   " + height);
 	Deps.autorun(function(){
+		console.log(Session.get('currentTask'));
+		width = window.innerWidth - margin.left - margin.right,
+    		height = window.innerHeight  - margin.top - margin.bottom;
+		svg.attr("width", width + margin.left + margin.right)
+                    .attr("height", height + margin.top + margin.bottom)
 		var dataset = Companies.find({"clientid" : clientid}).fetch();
 		var contents =  CompaniesDescription.find({"clientid" : clientid}).fetch();
 		console.log(contents);
